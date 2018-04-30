@@ -23,7 +23,7 @@ while True:
     grid = [list(input().strip()) for i in range(H)]
     next_input_must_be("STOP turn %d"%(turn))
     print("START action %d"%(turn))
-    print(random.choice(["U","D","L", "R"]))
+    print(random.choice("UDLRUDLRUDLRB"))
     print("STOP action %d"%(turn))
     turn += 1
     

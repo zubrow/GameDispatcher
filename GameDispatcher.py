@@ -4,8 +4,8 @@ from threading import Thread
 import subprocess
 import time
 from sys import stderr,argv
-debug = True
-
+debug = False
+display = True
 class Program(object):
     def __init__(self, name, command):
         if debug: print("Create Program '%s' with command '%s'"%(name, command))
@@ -54,8 +54,11 @@ class Program(object):
                 else :
                     print(self.name," : no label started (START expected)", file=stderr)
                     break
-            if debug: print(self.name, "stop reading", sep=" : ")
-            
+            if debug: 
+                print(self.name, "stop reading", sep=" : ")
+            for line in self.process.stderr :
+                print(self.name, line.strip(), sep=" : ")
+        
             self.stop()
 
         self.thread = Thread(target=target)
@@ -102,7 +105,7 @@ class Program(object):
             if not line:continue
             if debug:
                 print(">"+self.name,line, sep=" : ")
-                self.process.stdin.write(line+"\n")
+            self.process.stdin.write(line+"\n")
        
         self.process.stdin.write("STOP %s\n"%label)
         if debug: print(">"+self.name, "STOP %s"%label, sep=" : ")
@@ -144,7 +147,7 @@ class GameEngineProgram(Program):
 
     def write_actions(self, turn, player, actions):
         if not actions:
-            actions = ""
+            actions = "NOACTION"
         self.write("actions %d %d"%(turn,player), actions)
 
 
@@ -164,6 +167,7 @@ if __name__ == "__main__":
 
         for nb,p in enumerate(players,1):
             turn_instructions = game_engine.read_turn(turn, nb)
+            if display : print(turn)
             p.write_turn(turn, turn_instructions)
             time.sleep(0.1)
             player_action = p.read_action(turn)
