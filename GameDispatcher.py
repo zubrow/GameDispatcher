@@ -159,14 +159,13 @@ if __name__ == "__main__":
         players_commands = [line.strip() for line in config]
         game_engine = GameEngineProgram(game_engine_command, len(players_commands))
         players = [PlayerProgram(cmd,i) for i,cmd in enumerate(players_commands,1)]
-    time.sleep(3)
     turn = 1
     while game_engine.is_running():
 
         for nb,p in enumerate(players,1):
             turn_instructions = game_engine.read_turn(turn, nb)
             p.write_turn(turn, turn_instructions)
-            time.sleep(1)
+            time.sleep(0.1)
             player_action = p.read_action(turn)
             game_engine.write_actions(turn, nb,player_action)
         turn += 1
