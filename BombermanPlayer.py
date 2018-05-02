@@ -14,6 +14,13 @@ next_input_must_be("START player")
 player = int(input())
 next_input_must_be("STOP player")
 
+
+next_input_must_be("START settings")
+line = input()
+while line != "STOP settings":
+    line = input()
+    
+
 grid = []
 
 turn = 1

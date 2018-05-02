@@ -5,6 +5,7 @@ WIDTH = 20
 HEIGHT = 20
 DELAY = 6
 RADIUS = 5
+BOMBS = 10
 grid = []
 player_position = {}
 bombs = {}
@@ -109,7 +110,11 @@ for i in range(random.randrange((WIDTH*HEIGHT)//8)):
 next_input_must_be("START players")
 players = int(input())
 next_input_must_be("STOP players")
-
+print("START settings")
+print("NB_BOMBS",BOMBS)
+print("BOMB_DURATION",DELAY)
+print("BOMB_RADIUS",RADIUS)
+print("STOP settings")
 
 #players position
 for i in range(1, players+1):

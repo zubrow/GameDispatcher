@@ -162,6 +162,9 @@ if __name__ == "__main__":
         players_commands = [line.strip() for line in config]
         game_engine = GameEngineProgram(game_engine_command, len(players_commands))
         players = [PlayerProgram(cmd,i) for i,cmd in enumerate(players_commands,1)]
+        settings = game_engine.read("settings")
+        for p in players:
+            p.write("settings", settings)
     turn = 1
     while game_engine.is_running():
 
