@@ -62,6 +62,7 @@ def player_action(player_id, action):
 
 def trigger_bomb(origin):
     x,y = origin
+    del bombs[origin]
     grid[y][x] = '_'
     decals = [(1,0), (-1,0), (0,1), (0, -1)]
     for dx,dy in decals:
@@ -86,7 +87,7 @@ def trigger_bomb(origin):
 
 
 def update_bombs():
-    for k,v in bombs.items():
+    for k,v in list(bombs.items()):
         if v == 1:
             trigger_bomb(k)
         else:
