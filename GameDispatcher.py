@@ -5,7 +5,9 @@ import subprocess
 import time
 from sys import stderr,argv
 debug = False
-display = True
+display = False
+
+
 class Program(object):
     def __init__(self, name, command):
         if debug: print("Create Program '%s' with command '%s'"%(name, command))
@@ -64,7 +66,7 @@ class Program(object):
         self.thread = Thread(target=target)
         self.thread.start()
         if debug: print("'%s' started"%self.name)
-        time.sleep(0.1)
+        time.sleep(1)
 
     def stop(self):
         try:
@@ -120,7 +122,7 @@ class PlayerProgram(Program):
         self.write("player", str(number))
 
     def read_action(self, turn):
-        return self.read("action %d"%turn) 
+        return self.read("action %d"%turn, True) 
 
     def write_turn(self, turn, content):
         self.write("turn %d"%turn, content)
@@ -136,13 +138,22 @@ class GameEngineProgram(Program):
     def read_turn(self, turn, player):
         instructions = self.read("turn %d %d"%(turn, player), True) 
         while not instructions and self.is_running():
-            time.sleep(0.05)
+            time.sleep(0.1)
             instructions = self.read("turn %d %d"%(turn, player), True) 
 
         print("-"*80)
         print(instructions)
         return instructions    
 
+    def read_settings(self):
+        instructions = self.read("settings", True) 
+        while not instructions and self.is_running():
+            time.sleep(0.1)
+            instructions = self.read("settings", True) 
+
+        print("="*80)
+        print(instructions)
+        return instructions    
 
 
     def write_actions(self, turn, player, actions):
@@ -160,9 +171,11 @@ if __name__ == "__main__":
     with open(argv[1]) as config:
         game_engine_command = config.readline().strip()
         players_commands = [line.strip() for line in config]
-        game_engine = GameEngineProgram(game_engine_command, len(players_commands))
         players = [PlayerProgram(cmd,i) for i,cmd in enumerate(players_commands,1)]
-        settings = game_engine.read("settings")
+        game_engine = GameEngineProgram(game_engine_command, len(players_commands))
+        settings = game_engine.read_settings()
+        if debug:
+            print("SETTINGS :",settings, file=stderr)
         for p in players:
             p.write("settings", settings)
     turn = 1
@@ -172,7 +185,7 @@ if __name__ == "__main__":
             turn_instructions = game_engine.read_turn(turn, nb)
             if display : print(turn)
             p.write_turn(turn, turn_instructions)
-            time.sleep(0.1)
+            time.sleep(0.05)
             player_action = p.read_action(turn)
             game_engine.write_actions(turn, nb,player_action)
         turn += 1
