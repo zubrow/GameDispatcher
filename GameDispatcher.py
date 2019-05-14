@@ -23,9 +23,9 @@ class Program(object):
                 self.params,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=stderr,
                 universal_newlines=True,
-                bufsize=0)
+                bufsize=1)
             if debug: print(self.name, "start reading", sep=" : ")
             current_label = None
             content = ""
@@ -58,15 +58,14 @@ class Program(object):
                     break
             if debug: 
                 print(self.name, "stop reading", sep=" : ")
-            for line in self.process.stderr :
-                print(self.name, line.strip(), sep=" : ")
+            
         
             self.stop()
 
         self.thread = Thread(target=target)
         self.thread.start()
         if debug: print("'%s' started"%self.name)
-        time.sleep(1)
+        time.sleep(.003)
 
     def stop(self):
         try:
@@ -122,10 +121,10 @@ class PlayerProgram(Program):
         self.write("player", str(number))
 
     def read_action(self, turn):
-        return self.read("action %d"%turn, True) 
+        return self.read("action", True) 
 
     def write_turn(self, turn, content):
-        self.write("turn %d"%turn, content)
+        self.write("turn", content)
 
 
 
@@ -138,11 +137,12 @@ class GameEngineProgram(Program):
     def read_turn(self, turn, player):
         instructions = self.read("turn %d %d"%(turn, player), True) 
         while not instructions and self.is_running():
-            time.sleep(0.1)
+            time.sleep(0.001)
             instructions = self.read("turn %d %d"%(turn, player), True) 
 
-        print("-"*80)
-        print(instructions)
+        if debug or display : 
+            print("-"*80)
+            print(instructions)
         return instructions    
 
     def read_settings(self):
@@ -161,7 +161,7 @@ class GameEngineProgram(Program):
             actions = "NOACTION"
         self.write("actions %d %d"%(turn,player), actions)
 
-
+fails = 0
 if __name__ == "__main__":
     if len(argv) == 1:
         print("configFile name required in first argument")
@@ -183,10 +183,17 @@ if __name__ == "__main__":
 
         for nb,p in enumerate(players,1):
             turn_instructions = game_engine.read_turn(turn, nb)
-            if display : print(turn)
+            if display : 
+                print(turn)
             p.write_turn(turn, turn_instructions)
-            time.sleep(0.05)
+            time.sleep(0.001)
             player_action = p.read_action(turn)
+            if display : 
+                print(nb,player_action)
+            if not player_action:
+                fails+=1
+                if fails > 10:
+                    break
             game_engine.write_actions(turn, nb,player_action)
         turn += 1
 

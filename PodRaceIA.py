@@ -2,6 +2,9 @@
 # -*- coding: Utf-8 -*- 
 import sys
 import random 
+import math
+
+debug = False
 player = 1
 NB_PODS = 3
 WIDTH = 100
@@ -9,11 +12,14 @@ HEIGHT = 100
 pods = []
 walls = []
 checkpoints = []
+MAX_TRUST = 100
+EXPO = 1.2
 
 
 def next_input_must_be(value):
     if input() != value:
         print("expected input was '",value,"'", sep="")
+        if debug:print("expected input was '",value,"'", sep="",file=sys.stderr)
         quit()
 
 def read_dimensions(parts):
@@ -26,18 +32,20 @@ def read_dimensions(parts):
 def read_nb_pods(parts):
     global NB_PODS
     NB_PODS = int(parts[1])
-    
+    if debug:print("nb pods : ", NB_PODS, file=sys.stderr)
+ 
 
 def read_list_of_circles(parts):
     nb = int(parts[1])
     l = []
     for i in range(nb):
-        values = map(int, input().split())
+        x,y,r = map(int, input().split())
         l.append({
-            "x":values[0],
-            "y":values[1],
-            "radius":values[2],
+            "x":x,
+            "y":y,
+            "radius":r,
             })
+    return l
 
 def read_walls(parts):
     global walls
@@ -46,11 +54,50 @@ def read_walls(parts):
 def read_checkpoints(parts):
     global checkpoints
     checkpoints = read_list_of_circles(parts)
+    if debug:print("checkpoints : ", checkpoints, file=sys.stderr)
 
 
 
 
+def dot(a,b):
+    return sum(x*y for x,y in zip(a,b))
 
+
+
+def get_turn(pod, cp):
+        vec = (cp["x"]-pod["x"],cp["y"]-pod["y"])
+        angle = (360+math.degrees(math.atan2(vec[1], vec[0])))%360
+        return -(pod["dir"]-angle)/2
+    
+
+def get_trust(pod, cp):
+        vec = (cp["x"]-pod["x"],cp["y"]-pod["y"])
+        normvec = .00001+dot(vec,vec)**.5
+        vec = (vec[0]/normvec,vec[1]/normvec)
+        speed = (pod["vx"],pod["vy"])
+        normspeed = .00001+dot(speed,speed)**.5
+        speed = (speed[0]/normspeed,speed[1]/normspeed)
+        
+        trust = (dot(vec,speed)+.5)*normvec**EXPO
+        if trust > MAX_TRUST:
+            return MAX_TRUST
+        return trust
+    
+
+
+def check(i):
+    pod = pods[i]
+    cp = checkpoints[cur_cp[i]]
+    vec = (cp["x"]-pod["x"],cp["y"]-pod["y"])
+    if dot(vec, vec) < cp["radius"]**2:
+        cur_cp[i]+=1
+
+
+
+if len(sys.argv)>1:
+    MAX_TRUST = float(sys.argv[1])
+if len(sys.argv)>2:
+    EXPO = float(sys.argv[2])
 
 settings = {
     "DIMENSIONS":read_dimensions,
@@ -68,22 +115,21 @@ next_input_must_be("START settings")
 line = input()
 while line != "STOP settings":
     parts = line.split()
-    try :
-        settings[parts[0]](parts)
-    except Exception as e:
-        print(e, file=sys.stderr)
+    settings[parts[0]](parts)
     line = input()
     
-
-
+pods = []
+cur_cp = [0]*NB_PODS
 turn = 1
 while True:
-    next_input_must_be("START turn %d"%(turn))
-    end = "STOP turn %d"%(turn)
+    next_input_must_be("START turn")
+    end = "STOP turn"
     pods = []
     line = input()
     while line != end:
-        play,pod,x,y,vx,vy,direction, health = map(float, input().split())
+        play,pod,x,y,vx,vy,direction, health = map(float, line.split())
+
+        if debug:print(play,pod,x,y,vx,vy,direction, health, file=sys.stderr)
         if play == player:
             pods.append({
                 "x":x,
@@ -95,11 +141,19 @@ while True:
                 }) 
         line = input()
 
-
-    print("START action %d"%(turn))
+    if debug:print(pods, file=sys.stderr)
+    if debug:print(checkpoints, file=sys.stderr)
+        
+    print("START action")
     for i in range(NB_PODS):
-        print(random.randint(-10,10),random.randint(3,10), end=";")
+        check(i)
+        if debug:print("debug IA : ",get_turn(pods[i], checkpoints[cur_cp[i]]),
+             get_trust(pods[i], checkpoints[cur_cp[i]]), end=";", file=sys.stderr)
+        
+        print(get_turn(pods[i], checkpoints[cur_cp[i]]),
+             get_trust(pods[i], checkpoints[cur_cp[i]]), end=";")
+        
     print("")
-    print("STOP action %d"%(turn))
+    print("STOP action")
     turn += 1
     

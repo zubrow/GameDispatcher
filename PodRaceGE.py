@@ -17,6 +17,8 @@ FRICTION = 0.005
 WIDTH = 800
 HEIGHT = 800
 TIME = 1
+MAX_TRUST = 10
+MAX_TURN = 15
 
 def next_input_must_be(value):
     val = input()
@@ -129,13 +131,27 @@ class Element:
         return "El"+"("+str(self.x)+","+str(self.y)+")"
 
 
+pods = []
+walls = []
+checkpoints = []
 
 class Pod(Element):
     def __init__(self, *args,**kwargs):
         Element.__init__(self,*args,**kwargs)
         self.direction = get_arg(args, kwargs, 6, "direction", 0)
         self.player = get_arg(args, kwargs, 7, "player", 1)
+        self.next_check = 0
 
+
+
+    def check_win(self):
+        if self.next_check >= len(checkpoints):
+            return True
+        while checkpoints[self.next_check].contains_center(self):
+            self.next_check+=1
+            if self.next_check >= len(checkpoints):
+                return True
+        return False
 
     def turn(self, deg):
         self.direction+=deg
@@ -157,17 +173,21 @@ class Pod(Element):
         except:
             pass
 
+    @property
+    def color(self):
+        colors = [(0,255,0),(0,0,255),(255,0,0),(255,0,255),(0,255,255),(255,255,0)]
+        return colors[self.player-1]
 
     def draw(self, img):
-        colors = [(0,255,0),(0,0,255),(255,0,0),(255,0,255),(0,255,255),(255,255,0)]
-        c = colors[self.player-1]
+        c = self.color
         cv2.circle(img,(int(self.x), int(self.y)), self.radius+1, (200,200,200) , -1)
         cv2.circle(img,(int(self.x), int(self.y)), self.radius, c , 2)
         rad = math.radians(self.direction)
         cv2.line(img,
                 (int(self.x), int(self.y)), 
                 (int(self.x+math.cos(rad)*self.radius), int(self.y+math.sin(rad)*self.radius)),c,2)
-   
+        
+        cv2.putText(img,str(self.next_check),(int(self.x+self.radius), int(self.y-self.radius)), font, .5,c,2)
 
     def __str__(self):
         return "POD"+str(self.player)+"("+str(self.x)+","+str(self.y)+")"
@@ -176,29 +196,32 @@ class Pod(Element):
         return "POD"+str(self.player)+"("+str(self.x)+","+str(self.y)+")"
 
 
+
+def bounded(v,m,M):
+    if v < m:return m
+    if v > M:return M
+    return v
+
 def player_action(player, action):
     actions = action.split(";")
     try : 
-        for i,action in enumerate(actions):
-            deg, p = [float(s) for s in action.split() if s.strip()]
+        for i,act in enumerate(actions):
+            deg, p = [float(s) for s in act.split() if s.strip()]
+            deg = bounded(deg, -MAX_TURN, MAX_TURN)
+            p = bounded(p, 0,MAX_TRUST)
             pods[player-1][i].turn(deg)
             pods[player-1][i].trust(p)
     except Exception as e:    
         print(e, file=sys.stderr)
 
-pods = []
-walls = []
-checkpoints = []
-next_check = []
 
 
 
 def init_game(nb):
-    global pods,next_check
+    global pods
     starts = [x for n in range(NB_PODS) for x in range(1, nb+1)]
     random.shuffle(starts)
     pods = [[] for i in range(nb)]
-    next_check = [[0]*NB_PODS for i in range(nb)]
     x = POD_RADIUS*2
     y = POD_RADIUS*2
     for i in starts:
@@ -256,12 +279,21 @@ def update_game():
         for p in chain(*pods):
             p.update_position(mt-0.001)
             p.friction(mt)
+            p.check_win()
         time+=mt
         if pod:
             print("impact between", pod, "and", elem, file=sys.stderr)
             pod.impact_redirection(elem)            
         pod,elem = None, None
-    pass
+
+    winner = 0
+    for player, plist in enumerate(pods):
+        for p in plist:
+            if p.check_win():
+                winner = player
+    return winner
+
+
 
 
 #initialize visualization if possible
@@ -275,7 +307,7 @@ if visu:
 
 
 
-def display_game():
+def display_game(winner=0):
     if not visu:
         return
     img = np.zeros((HEIGHT, WIDTH, 3), np.uint8)
@@ -289,12 +321,19 @@ def display_game():
     for index,c in enumerate(checkpoints):
         cv2.circle(img,(int(c.x), int(c.y)), c.radius, (100,100,100), 1)
         cv2.putText(img,str(index),(int(c.x), int(c.y)), font, 0.3,(100,100,100))
-    for plist in pods:
-        for p in plist:
+    for i,plist in enumerate(pods,1):
+        for j,p in enumerate(plist,1):
             p.draw(img)
+            cv2.putText(img,str(p.next_check),(int(j*20), int(i*20)), font, .5,p.color,2)
+    if winner:
+        cv2.putText(img,"WINNER : "+str(winner),(WIDTH//4, HEIGHT//2), font, 2,pods[winner][0].color,5)
+        cv2.imshow('POD',img)
+        return cv2.waitKey(-1)
+
+
 
     cv2.imshow('POD',img)
-    return cv2.waitKey(10)
+    return cv2.waitKey(1)
         
 
 
@@ -338,7 +377,7 @@ if GE :
     turn = 1
     while True:
         winner = update_game()
-        display_game()
+        display_game(winner)
         for player in range(1,players+1):
             print("START turn %d %d"%(turn, player))
             if winner:
@@ -362,5 +401,8 @@ else :
     while True:
         update_game()
         k = display_game()
-       
+        for i,ppods in enumerate(pods,1):
+                    for j,p in enumerate(ppods,1):
+                        p.trust(10)
+                        p.turn(1)
         if k > 0 : break
