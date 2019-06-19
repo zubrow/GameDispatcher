@@ -14,19 +14,19 @@ next_input_must_be("START player")
 player = int(input())
 next_input_must_be("STOP player")
 
+next_input_must_be("START settings")
+next_input_must_be("STOP settings")
 grid = []
 
-turn = 1
 while True:
-    next_input_must_be("START turn %d"%(turn))
+    next_input_must_be("START turn")
     grid = [list(input().strip()) for i in range(3)]
-    next_input_must_be("STOP turn %d"%(turn))
+    next_input_must_be("STOP turn")
     while True:
         x,y = [random.randrange(0,3) for i in range(2)]    
         if grid[y][x] == '_':
             break
-    print("START action %d"%(turn))
+    print("START action")
     print(x,y)
-    print("STOP action %d"%(turn))
-    turn += 1
+    print("STOP action")
     

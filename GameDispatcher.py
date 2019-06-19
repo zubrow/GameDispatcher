@@ -4,8 +4,11 @@ from threading import Thread
 import subprocess
 import time
 from sys import stderr,argv
+from inspect import currentframe, getframeinfo
 debug = False
 display = False
+timeout = 100
+
 
 
 class Program(object):
@@ -38,6 +41,8 @@ class Program(object):
                     elif line.startswith("STOP"):
                         label =  line.strip().split(maxsplit=1)
                         if len(label) == 1 or label[1] == current_label:
+                            if debug: print("QUEUE",self.name,(current_label, content))
+           
                             self.queue.put((current_label, content))
                             current_label = None
                             content = ""
@@ -65,7 +70,7 @@ class Program(object):
         self.thread = Thread(target=target)
         self.thread.start()
         if debug: print("'%s' started"%self.name)
-        time.sleep(.003)
+        time.sleep(timeout/1000)
 
     def stop(self):
         try:
@@ -86,6 +91,8 @@ class Program(object):
         if debug: print("'%s' : read label '%s'"%(self.name, label))        
         while not self.queue.empty():
             item = self.queue.get()
+            if debug: print("DEQUEUE",self.name,item)
+           
             if item[0] == label:
                 if debug: print(item[1],end="") 
                 return item[1]
@@ -137,7 +144,7 @@ class GameEngineProgram(Program):
     def read_turn(self, turn, player):
         instructions = self.read("turn %d %d"%(turn, player), True) 
         while not instructions and self.is_running():
-            time.sleep(0.001)
+            time.sleep(timeout/1000)
             instructions = self.read("turn %d %d"%(turn, player), True) 
 
         if debug or display : 
@@ -146,13 +153,17 @@ class GameEngineProgram(Program):
         return instructions    
 
     def read_settings(self):
+        if debug: print(self.name, "READ SETTINGS", sep=" : ")
+      
         instructions = self.read("settings", True) 
-        while not instructions and self.is_running():
-            time.sleep(0.1)
+        while instructions == None and self.is_running():
+            time.sleep(timeout/100)
             instructions = self.read("settings", True) 
 
         print("="*80)
         print(instructions)
+        if debug: print(self.name, "READ SETTINGS DONE", sep=" : ")
+      
         return instructions    
 
 
@@ -162,12 +173,17 @@ class GameEngineProgram(Program):
         self.write("actions %d %d"%(turn,player), actions)
 
 fails = 0
+winner = -1
 if __name__ == "__main__":
     if len(argv) == 1:
         print("configFile name required in first argument")
         quit()
     game_engine = None
     players = []
+    debug = "debug" in map(str.lower,argv[1:])
+    display = "display" in map(str.lower,argv[1:])
+
+
     with open(argv[1]) as config:
         game_engine_command = config.readline().strip()
         players_commands = [line.strip() for line in config]
@@ -199,3 +215,5 @@ if __name__ == "__main__":
 
     for p in players:
         p.stop()
+    print(winner)
+    

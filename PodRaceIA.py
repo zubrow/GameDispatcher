@@ -14,6 +14,9 @@ walls = []
 checkpoints = []
 MAX_TRUST = 100
 EXPO = 1.2
+MAX_SPEED = 1000
+MIN_SPEED = 1
+
 
 
 def next_input_must_be(value):
@@ -77,8 +80,12 @@ def get_trust(pod, cp):
         speed = (pod["vx"],pod["vy"])
         normspeed = .00001+dot(speed,speed)**.5
         speed = (speed[0]/normspeed,speed[1]/normspeed)
-        
-        trust = (dot(vec,speed)+.5)*normvec**EXPO
+        if dot(vec, speed) > 0.5:
+            if normspeed > MAX_SPEED:
+                return 0
+            if normspeed < MIN_SPEED:
+                return MAX_TRUST
+        trust = normvec**EXPO
         if trust > MAX_TRUST:
             return MAX_TRUST
         return trust
@@ -98,6 +105,11 @@ if len(sys.argv)>1:
     MAX_TRUST = float(sys.argv[1])
 if len(sys.argv)>2:
     EXPO = float(sys.argv[2])
+if len(sys.argv)>3:
+    MIN_SPEED = float(sys.argv[3])
+if len(sys.argv)>4:
+    MAX_SPEED = float(sys.argv[4])
+
 
 settings = {
     "DIMENSIONS":read_dimensions,

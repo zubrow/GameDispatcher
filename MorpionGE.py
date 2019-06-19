@@ -15,10 +15,12 @@ grid = [["_"]*3 for x in range(3)]
 
 for line in ["START players","2", "STOP players"]:
     next_input_must_be(line)
-
+print("START settings\nSTOP settings")
+        
 turn = 1
 while True:
     for player in range(1,3):
+	
         print("START turn %d %d"%(turn, player))
         for gline in grid:
             print("".join(gline))

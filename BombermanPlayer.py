@@ -23,14 +23,12 @@ while line != "STOP settings":
 
 grid = []
 
-turn = 1
 while True:
-    next_input_must_be("START turn %d"%(turn))
+    next_input_must_be("START turn")
     W,H=  [int(val) for val in input().split()]
     grid = [list(input().strip()) for i in range(H)]
-    next_input_must_be("STOP turn %d"%(turn))
-    print("START action %d"%(turn))
+    next_input_must_be("STOP turn")
+    print("START action")
     print(random.choice("UDLRUDLRUDLRB"))
-    print("STOP action %d"%(turn))
-    turn += 1
+    print("STOP action")
     

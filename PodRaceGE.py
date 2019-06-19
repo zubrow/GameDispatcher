@@ -3,7 +3,7 @@ import math
 import random
 from itertools import chain
 
-visu = True
+visu = "display" in sys.argv
 try : 
     import numpy as np
     import cv2
@@ -17,7 +17,7 @@ FRICTION = 0.005
 WIDTH = 800
 HEIGHT = 800
 TIME = 1
-MAX_TRUST = 10
+MAX_TRUST = 100
 MAX_TURN = 15
 
 def next_input_must_be(value):
@@ -287,7 +287,7 @@ def update_game():
         pod,elem = None, None
 
     winner = 0
-    for player, plist in enumerate(pods):
+    for player, plist in enumerate(pods,1):
         for p in plist:
             if p.check_win():
                 winner = player
@@ -308,6 +308,7 @@ if visu:
 
 
 def display_game(winner=0):
+
     if not visu:
         return
     img = np.zeros((HEIGHT, WIDTH, 3), np.uint8)
@@ -326,7 +327,7 @@ def display_game(winner=0):
             p.draw(img)
             cv2.putText(img,str(p.next_check),(int(j*20), int(i*20)), font, .5,p.color,2)
     if winner:
-        cv2.putText(img,"WINNER : "+str(winner),(WIDTH//4, HEIGHT//2), font, 2,pods[winner][0].color,5)
+        cv2.putText(img,"WINNER : "+str(winner),(WIDTH//4, HEIGHT//2), font, 2,pods[winner-1][0].color,5)
         cv2.imshow('POD',img)
         return cv2.waitKey(-1)
 
@@ -353,6 +354,13 @@ GE = True
 
 if len(sys.argv) > 1 and sys.argv[1].lower() == "test":
     GE = False
+
+try :
+    if len(sys.argv)>1:
+        NB_PODS = int(sys.argv[1])
+
+except:
+    pass
 
 
 if GE : 
