@@ -41,3 +41,9 @@ At start :
 2. **dispatcher** send to each **AI** its player number (starting at 1)
 3. **game engine** send its settings to **dispatcher**
 4. **dispatcher** send the settings to each **AI** 
+
+Then, until the end, at each turn (numbered starting at 1), and for each **AI** : 
+* **game engine** send the game states infos for the **AI** to the **dispacher** 
+* **dispatcher** send the  game states infos to the **AI**
+* **AI** send its instructions to the **dispatcher**
+* **dispatcher** send the instructions to the **game engine**
