@@ -7,7 +7,7 @@ from sys import stderr,argv
 from inspect import currentframe, getframeinfo
 debug = False
 display = False
-timeout = 100
+timeout = 1
 
 
 
