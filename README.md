@@ -53,13 +53,13 @@ From the game engine's point of view, communication is :
 1. read a message *`<players>`* containing the number of players
 2. send a message *`<settings>`* containing all the information for the comprehension of the game
 3. for each turn, for each player, until the end of the game : 
-* send a message <turn #turn #player>
-* read a message <action #turn #player>
+..* send a message <turn #turn #player>
+..* read a message <action #turn #player>
 
 ### AI protocol
 From the AI's point of view, communication is :
 1. read a message *`<player>`* containing the id of the player
 2. read a message *`<settings>`* containing all the information for the comprehension of the game
 3. for each turn, until the end of the game : 
-* read a message <turn>
-* send a message <action>
+..* read a message <turn>
+..* send a message <action>
