@@ -211,11 +211,12 @@ if __name__ == "__main__":
 
     with open(argv[1]) as config:
         game_engine_command = config.readline().strip()
-        players_commands = [line.strip() for line in config]
+        players_commands = [line.strip() for line in config if line.strip()]
         players = [PlayerProgram(cmd,i) for i,cmd in enumerate(players_commands,1)]
         game_engine = GameEngineProgram(game_engine_command, len(players_commands))
         settings = game_engine.read_settings()
-        if debug:
+        if debug:    
+            print("players :",*players_commands,sep="\n", file=stderr)
             print("SETTINGS :",settings, file=stderr)
         for p in players:
             p.write("settings", settings)
