@@ -12,12 +12,21 @@ timeout = 1
 
 
 class Program(object):
+    
+    instances = []
+
+
     def __init__(self, name, command):
         if debug: print("Create Program '%s' with command '%s'"%(name, command))
         self.queue = Queue()
         self.name = name
         self.params = command.split()
+        self.process = None
         self.start()
+        self.instances.append(self)
+
+
+
 
     def start(self):
         def target():
@@ -29,6 +38,9 @@ class Program(object):
                 stderr=stderr,
                 universal_newlines=True,
                 bufsize=1)
+            if not self.process :
+                exit()
+                
             if debug: print(self.name, "start reading", sep=" : ")
             current_label = None
             content = ""
@@ -70,7 +82,11 @@ class Program(object):
         self.thread = Thread(target=target)
         self.thread.start()
         if debug: print("'%s' started"%self.name)
-        time.sleep(timeout/1000)
+        time.sleep(0.5)
+        if not self.process :
+            print("'"," ".join(self.params),"' failed to execute. Exit program.", sep="")
+            Program.stop_all()
+            exit()
 
     def stop(self):
         try:
@@ -82,6 +98,15 @@ class Program(object):
         self.thread = None
         if debug: print("'%s' stoped"%self.name)
 
+    @classmethod
+    def stop_all(cls):
+        for i in cls.instances:
+            try:
+                i.stop()
+            except:
+                pass
+    
+    
     def is_running(self):
         return self.process != None
 
