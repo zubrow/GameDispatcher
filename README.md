@@ -63,3 +63,8 @@ From the AI's point of view, communication is :
 3. for each turn, until the end of the game : 
   * read a message <turn>
   * send a message <action>
+
+
+
+### Licence
+Licence MIT
